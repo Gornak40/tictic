@@ -3,7 +3,7 @@
 #include <unordered_map>
 using namespace std;
 
-const int N = 3;
+const int N = 4;
 const int INF = 1e9;
 
 // inline section
@@ -70,8 +70,14 @@ bool is_end(int board) {
 
 // go section
 int minimax(int board, int dep, int &nodes, unordered_map<int, int> &Cash, int &res_i, int &res_j) {
+	auto it = Cash.find(board);
+	if (it != Cash.end()) return (*it).second;
 	++nodes;
-	if (is_end(board)) return f(board);
+	if (is_end(board)) {
+		int cp = f(board);
+		Cash[board] = cp;
+		return cp;
+	}
 	bool is_min = dep & 1;
 	int cp = is_min ? INF : -INF;
 	for (int i = 0; i < N; ++i)
@@ -83,6 +89,7 @@ int minimax(int board, int dep, int &nodes, unordered_map<int, int> &Cash, int &
 			cp = is_min ? min(cp, tmp) : max(cp, tmp);
 			set_val(board, i, j);
 		}
+	Cash[board] = cp;
 	return cp;
 }
 
