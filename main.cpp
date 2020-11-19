@@ -4,7 +4,8 @@
 using namespace std;
 
 const int N = 4;
-const int INF = 1e9;
+const double INF = 1e9;
+const bool BOT_TURN = 0;
 
 // inline section
 inline bool turn(int board) {
@@ -23,8 +24,12 @@ inline bool get_val(int board, int i, int j) {
 	return bit(board, get_ind(i, j));
 }
 
-inline int f(int board) {
-	return (!turn(board) ? 1 : -1);
+inline double get_coef(int board) {
+	return turn(board) == BOT_TURN ? 1 : -1;
+}
+
+inline double f(int board, int dep) {
+	return get_coef(board) * (1 - 0.01 * dep);
 }
 
 inline void set_val(int &board, int i, int j) {
@@ -69,22 +74,22 @@ bool is_end(int board) {
 // endgame check
 
 // go section
-int minimax(int board, int dep, int &nodes, unordered_map<int, int> &Cash, int &res_i, int &res_j) {
+double minimax(int board, int dep, int &nodes, unordered_map<int, double> &Cash, int &res_i, int &res_j) {
 	auto it = Cash.find(board);
 	if (it != Cash.end()) return (*it).second;
 	++nodes;
 	if (is_end(board)) {
-		int cp = f(board);
+		auto cp = f(board, dep);
 		Cash[board] = cp;
 		return cp;
 	}
-	bool is_min = dep & 1;
-	int cp = is_min ? INF : -INF;
+	bool is_min = turn(board) != BOT_TURN;
+	double cp = is_min ? INF : -INF;
 	for (int i = 0; i < N; ++i)
 		for (int j = 0; j < N; ++j) {
 			if (get_val(board, i, j)) continue;
 			set_val(board, i, j);
-			int tmp = minimax(board, dep + 1, nodes, Cash, res_i, res_j);
+			auto tmp = minimax(board, dep + 1, nodes, Cash, res_i, res_j);
 			if (!dep && tmp > cp) res_i = i, res_j = j;
 			cp = is_min ? min(cp, tmp) : max(cp, tmp);
 			set_val(board, i, j);
@@ -95,8 +100,8 @@ int minimax(int board, int dep, int &nodes, unordered_map<int, int> &Cash, int &
 
 void go_bot(int board, int &i, int &j) {
 	int nodes = 0;
-	unordered_map<int, int> Cash;
-	int cp = minimax(board, 0, nodes, Cash, i, j);
+	unordered_map<int, double> Cash;
+	auto cp = minimax(board, 0, nodes, Cash, i, j);
 	cout << "cp: " << cp << ", nodes: " << nodes << endl;
 }
 
@@ -118,7 +123,7 @@ void print_board(int board) {
 
 void print_winner(int board) {
 	bool winner = turn(board);
-	if (!winner) cout << "AI is the winner" << endl;
+	if (winner == BOT_TURN) cout << "AI is the winner" << endl;
 	else cout << "You are the winner" << endl;
 }
 
@@ -127,7 +132,7 @@ void terminal() {
 	print_board(board);
 	while (!is_end(board)) {
 		int i, j;
-		if (!turn(board)) go_bot(board, i, j);
+		if (turn(board) == BOT_TURN) go_bot(board, i, j);
 		else go_human(board, i, j);
 		assert(!get_val(board, i, j));
 		set_val(board, i, j);
